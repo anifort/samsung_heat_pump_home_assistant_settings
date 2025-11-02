@@ -1,0 +1,250 @@
+- id: '1761093220178'
+  alias: Change Pump Speed
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.ehs_pump_pwm
+    above: 0
+  conditions: []
+  actions:
+  - action: modbus.write_register
+    metadata: {}
+    data:
+      hub: samsung
+      value: '{{ states(''input_number.pump_pwm'') | int }}'
+      slave: 1
+      address: 85
+  mode: single
+- id: '1761130073523'
+  alias: Adjust Pump Speed for HP Delta T (Modbus)
+  description: Runs every 30 seconds to adjust pump speed via Modbus to target a 4-degree
+    delta_t.
+  triggers:
+  - trigger: time_pattern
+    seconds: '30'
+    enabled: true
+  - trigger: numeric_state
+    entity_id:
+    - sensor.compressor_stages
+    above: 1
+    below: 3
+    enabled: false
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.ehs_pump_pwm
+    above: 0
+  - condition: numeric_state
+    entity_id: sensor.compressor_frequency_current
+    above: 5
+  actions:
+  - variables:
+      target_delta: '{{ states(''input_number.water_pump_target_delta'') | int(5)
+        }}'
+      gain: 5
+      min_speed: '{{ states(''input_number.water_pump_min_speed_percent'') | int(70)
+        }}'
+      default_speed: '{{ states(''input_number.water_pump_default_speed_percent'')
+        | int(75) }}'
+      max_speed: 100
+      current_delta: "{% set in = states('sensor.hp_water_in_temperature') | float(0)
+        %} {% set out = states('sensor.hp_water_out_temperature') | float(0) %} {%
+        if in and out %}\n  {{ (out - in) | round(2) }}\n{% else %}\n  unavailable\n{%
+        endif %}\n"
+      current_speed: '{{ states(''sensor.ehs_pump_pwm'') | int(75) }}'
+      error: '{{ target_delta - current_delta }}'
+      adjustment: '{{ (-1 * error * gain) }}'
+      new_speed_raw_unconstrained: '{{ current_speed + adjustment }}'
+      max_increase_speed: '{{ current_speed + 5 }}'
+      min_decrease_speed: '{{ current_speed - 5 }}'
+      new_speed_raw: '{% set unconstrained = new_speed_raw_unconstrained | float(current_speed)
+        %} {% set upper_bound = max_increase_speed | float(100) %} {% set lower_bound
+        = min_decrease_speed | float(0) %} {{ [ [ unconstrained, upper_bound ] | min,
+        lower_bound ] | max }}
+
+        '
+      new_speed: '{{ [ [ new_speed_raw, min_speed ] | max, max_speed ] | min | int
+        }}'
+  - action: modbus.write_register
+    metadata: {}
+    data:
+      hub: samsung
+      value: '{{ new_speed | int }}'
+      slave: 1
+      address: 85
+    enabled: false
+  - if:
+    - condition: state
+      entity_id: input_boolean.water_pump_variable_onoff
+      state: 'on'
+    then:
+    - delay:
+        hours: 0
+        minutes: 5
+        seconds: 0
+        milliseconds: 0
+    - action: modbus.write_register
+      metadata: {}
+      data:
+        hub: samsung
+        value: '{{ new_speed | int }}'
+        slave: 1
+        address: 85
+    else:
+    - action: modbus.write_register
+      metadata: {}
+      data:
+        hub: samsung
+        value: '{{ default_speed | int }}'
+        slave: 1
+        address: 85
+  mode: single
+- id: '1761265477033'
+  alias: Pump Frequency Control
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    seconds: '1'
+  conditions:
+  - condition: state
+    entity_id: sensor.compressor_stages
+    state: '2'
+  - condition: numeric_state
+    entity_id: sensor.compressor_stages
+    above: 1
+  actions:
+  - if: []
+    then: []
+  mode: single
+- id: '1761266028935'
+  alias: New automation
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    seconds: '1'
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.compressor_stages
+    above: 1
+    below: 3
+  actions:
+  - action: modbus.write_register
+    metadata: {}
+    data:
+      hub: samsung
+      address: 25
+      slave: 1
+      value: '{{ states(''input_number.comp_freq_order'') | int(30) }}'
+    enabled: false
+  - action: modbus.write_register
+    metadata: {}
+    data:
+      hub: samsung
+      address: 26
+      slave: 1
+      value: '{{ states(''input_number.comp_freq_target'') | int(30) }}'
+  mode: single
+- alias: When new Modbus data arrives
+  trigger:
+  - platform: state
+    entity_id: sensor.compressor_frequency_order
+  action:
+  - service: notify.notify
+    data:
+      message: Modbus data updated!
+  id: 15cf26efa66542c9839acaa61bc67adc
+- id: '1761300817376'
+  alias: Compressor Frequency Order Adjustment
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.compressor_stages
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.3_way_valve_position_0_room_1_tank
+    above: -1
+    below: 1
+  - condition: numeric_state
+    entity_id: sensor.compressor_stages
+    above: 1
+    below: 3
+  actions:
+  - delay:
+      hours: 0
+      minutes: 10
+      seconds: 0
+      milliseconds: 0
+    enabled: true
+  - repeat:
+      while:
+      - condition: numeric_state
+        entity_id: sensor.freq_order_smooth
+        above: 14
+        below: 121
+      - condition: numeric_state
+        entity_id: sensor.compressor_stages
+        above: 1
+        below: 3
+      - condition: numeric_state
+        entity_id: sensor.3_way_valve_position_0_room_1_tank
+        above: -1
+        below: 1
+      - condition: numeric_state
+        entity_id: sensor.compressor_frequency_order
+        above: 10
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 3
+          milliseconds: 0
+      - variables:
+          gain: 2
+          order_freq: '{{ states(''sensor.compressor_frequency_order'') | int }}'
+          current_freq: '{{ states(''sensor.compressor_frequency_current'') | int
+            }}'
+          delta: '{{ order_freq - current_freq }}'
+          change_freq: '{{ ((current_freq + order_freq) / 2) | int }}
+
+            '
+          step_direction: '{{ ( (delta > 0) | int ) - ( (delta < 0) | int ) }}
+
+            '
+          change_freq_small: '{{ current_freq + step_direction }}
+
+            '
+          keep_running_calibration: "{% set H = states('sensor.water_hysterisis_t')
+            | float(0) %}\n{% if H > 2 %}\n  0\n{% elif H < 0.5 %}\n  2\n{% else %}\n
+            \ 1\n{% endif %}\n"
+          default_freq: 31
+          change_to_mean: "{% set H = states('sensor.water_hysterisis_t') | float(0)
+            %}\n{% if H < 1 %}\n  {{ current_freq - 1 }}\n{% elif H < 0.5 %}\n  {{
+            current_freq - 2 }}\n{% else %}\n  {{ (states('sensor.freq_order_smooth')
+            | int ) }}\n{% endif %}\n"
+      - action: modbus.write_register
+        metadata: {}
+        data:
+          hub: samsung
+          value: '{{ 30 | int }}'
+          slave: 1
+          address: 25
+        enabled: true
+  - data:
+      message: Modbus data updated!
+    action: notify.notify
+    enabled: false
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.compressor_stages
+      below: 1
+    then:
+    - action: modbus.write_register
+      metadata: {}
+      data:
+        hub: samsung
+        value: '{{ 0 | int }}'
+        slave: 1
+        address: 25
+      enabled: true
+  mode: single

@@ -1,0 +1,9 @@
+.storage
+.cloud
+blueprints
+.*.lock
+.HA*
+*.db
+*.db*
+*.log
+*.log.*

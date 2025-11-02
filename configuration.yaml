@@ -1,0 +1,192 @@
+default_config:
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+input_number:
+  comp_freq_order:
+    name: Freq Order 
+    min: 15
+    max: 45
+    step: 1
+    unit_of_measurement: "Hz"
+    mode: slider
+  comp_freq_target:
+    name: Freq Target
+    min: 15
+    max: 45
+    step: 1
+    unit_of_measurement: "Hz"
+    mode: slider
+    
+    
+  wc_water_temp_low:
+    name: WC Water Temp Low
+    min: 20
+    max: 80
+    step: 1
+    unit_of_measurement: "°C"
+    mode: slider
+  wc_outside_temp_low:
+    name: WC Outside Temp Low
+    min: -20
+    max: 10
+    step: 1
+    unit_of_measurement: "°C"
+    mode: slider
+  wc_water_temp_high:
+    name: WC Water Temp High
+    min: 20
+    max: 80
+    step: 1
+    unit_of_measurement: "°C"
+    mode: slider
+  wc_outside_temp_high:
+    name: WC Outside Temp High
+    min: 10
+    max: 30
+    step: 1
+    unit_of_measurement: "°C"
+    mode: slider
+    
+  water_pump_default_speed_percent:
+    name: Water Pump Default Speed
+    min: 45
+    max: 100
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+    icon: mdi:pulse
+  water_pump_min_speed_percent:
+    name: Water Pump Min Speed
+    min: 40
+    max: 70
+    step: 1
+    mode: slider
+    unit_of_measurement: "%"
+    icon: mdi:pump
+    icon: mdi:pulse
+  water_pump_target_delta:
+    min: 2
+    max: 6
+    step: 1
+    mode: slider
+    unit_of_measurement: °C
+    icon: mdi:delta
+    name: Water Pump Target Delta
+
+input_boolean:
+  water_pump_variable_onoff:
+    name: Auto Adjustment
+    icon: mdi:fan-chevron-up
+
+        
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+modbus: !include modbus.yaml
+
+
+template:
+
+template:
+  - trigger:
+      # This fires every time the compressor sensor's state changes
+      - platform: state
+        entity_id: sensor.compressor_frequency_order
+    sensor:
+      - name: "Frequency Sampling Mean"
+        unique_id: hp_freq_sampling
+        
+        # The 'state' will hold our list of the last 5 values as a JSON string
+        state: >
+          {# 1. Try to convert the new state to a number (float).
+                'none' is a safe default if conversion fails (e.g., state is 'unknown'). #}
+          {% set new_value = trigger.to_state.state | float(none) %}
+          
+          {# 2. Get the current list from this sensor's own state.
+                It's stored as a JSON string, so we use 'from_json'.
+                If the sensor is new or state is 'unknown', default to an empty list []. #}
+          {% set old_list = from_json(this.state) if this.state not in ['unknown', 'unavailable'] else [] %}
+          
+          {# 3. Set a variable for the list we will output. Default to the old list. #}
+          {% set new_list = old_list %}
+          
+          {# --- Logic to add the new value --- #}
+          {# 4. First, check if the new value is a valid number. #}
+          {% if new_value is not none %}
+          
+            {# 5. Second, check if the list is empty OR if the new value is
+                 DIFFERENT from the most recent value already in the list.
+                 This satisfies your "collect the changes" requirement. #}
+            {% if (old_list | length == 0) or (new_value != old_list[0]) %}
+              
+              {# 6. Add the new value to the START of the list. #}
+              {% set new_list = [new_value] + old_list %}
+              
+            {% endif %}
+          {% endif %}
+          
+          {# --- Output --- #}
+          {# 7. Get the final list of 5 values #}
+          {% set final_list = new_list[0:5] %}
+          
+          {# 8. Calculate the average and round it to 2 decimal places.
+                 Check if list has items first to avoid a 'division by zero' error. #}
+          {% if final_list | length > 0 %}
+            {{ final_list | average | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+          
+  - sensor:
+      - name: Water Delta T
+        unique_id: hp_delta_t
+        state_class: measurement
+        unit_of_measurement: "°C"
+        icon: mdi:delta
+        state: >
+          {% set in = states('sensor.hp_water_in_temperature') | float(0) %}
+          {% set out = states('sensor.hp_water_out_temperature') | float(0) %}
+          {% if in and out %}
+            {{ (out - in) | round(2) }}
+          {% else %}
+            unavailable
+          {% endif %}
+          
+      - name: Water Hysterisis T
+        unique_id: hp_water_hysterisis_t
+        state_class: measurement
+        unit_of_measurement: "°C"
+        icon: mdi:delta
+        state: >
+          {% set in = states('sensor.water_out_temp_smooth') | float(0) %}
+          {% set target = states('sensor.water_law_target_temp') | float(0) %}
+          {% if in and target %}
+            {{ (target - in) | round(2) }}
+          {% else %}
+            unavailable
+          {% endif %}
+          
+        
+      - name: "Weather Compensation Target Flow Temp"
+        unique_id: hp_weather_compensation_target_flow_temp
+        unit_of_measurement: "°C"
+        state_class: measurement
+        state: >
+          {% set outside_temp = states('sensor.outside_temp_1') | float(0) %}
+          {% set low_outside_temp = states('input_number.wc_outside_temp_low') | float(0) %}
+          {% set high_outside_temp = states('input_number.wc_outside_temp_high') | float(0) %}
+          {% set low_water_temp = states('input_number.wc_water_temp_low') | float(0) %}
+          {% set high_water_temp = states('input_number.wc_water_temp_high') | float(0) %}
+          {% set water_law_correction = states('sensor.water_law_target') | float(0) %}
+
+          {% if low_outside_temp == high_outside_temp %}
+            {{ low_water_temp }}
+          {% else %}
+            {% set slope = (high_water_temp - low_water_temp) / (high_outside_temp - low_outside_temp) %}
+            {% set target_temp = (slope * (outside_temp - low_outside_temp)) + low_water_temp + water_law_correction  %}
+            {{ target_temp | round(1) }}
+          {% endif %}
+          
+     

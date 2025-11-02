@@ -1,0 +1,796 @@
+  - name: "samsung"
+    type: serial
+    port: /dev/ttyACM0
+    baudrate: 9600
+    bytesize: 8
+    method: rtu
+    parity: E
+    stopbits: 1
+    close_comm_on_error: true
+    delay: 0
+    message_wait_milliseconds: 30
+    retries: 5
+    retry_on_empty: true
+    timeout: 5
+    
+    
+    switches:
+      - name: 'Quiet Mode'
+        slave: 1
+        address: 78
+        write_type: holding
+        command_on: 1
+        command_off: 0
+        verify:
+            input_type: holding
+            address: 78
+            delay: 1
+            state_on: 1
+            state_off: 0
+        unique_id: hp_quiet_switch
+        
+      - name: 'Away Mode'
+        slave: 1
+        address: 79
+        write_type: holding
+        command_on: 1
+        command_off: 0
+        verify:
+            input_type: holding
+            address: 79
+            delay: 1
+            state_on: 1
+            state_off: 0
+        unique_id: hp_away_switch
+        
+      - name: 'Hot Water'
+        slave: 1
+        address: 72
+        write_type: holding
+        command_on: 1
+        command_off: 0
+        verify:
+            input_type: holding
+            address: 72
+            delay: 1
+            state_on: 1
+            state_off: 0
+        unique_id: hp_hot_water_switch
+        
+    sensors:
+
+    #   - name: 'TEST_Outside_Temp'
+    #     unit_of_measurement: °C
+    #     slave: 2
+    #     address: 13
+    #     scale: 0.1
+    #     scan_interval: 30
+    #     precision: 2
+    #     unique_id: TEST_Outside_Temp
+    #     device_class: sensor
+        
+      - name: 'ModBus Interface Module Error Status'
+        slave: 1
+        address: 0
+        unique_id: hp_modbus_interface_error
+        
+      - name: 'Integrated Outdoor Unit error code' # 0 no error, 100 to 999 Error Code
+        slave: 1
+        address: 1 
+        unique_id: hp_outdoor_unit_error
+        
+      - name: 'Defrost Operation' # 0 or 0xFF(255) defrost off, otherwise defrost on
+#        unit_of_measurement: ''
+        slave: 1
+        address: 2 # 
+        unique_id: hp_defrost_operation
+        
+        
+      - name: '3'
+        slave: 1
+        address: 3
+        scan_interval: 30
+        unique_id: hp_3
+        
+      - name: 'Compressor Stages'
+        slave: 1
+        address: 4
+        scan_interval: 1
+        unique_id: hp_compressor_stages
+        
+        
+      - name: 'Outside Temp 2'
+        unit_of_measurement: °C
+        slave: 1
+        address: 5 # 0x8204
+        scale: 0.1
+        scan_interval: 30
+        precision: 2
+        unique_id: hp_outside_temp_2
+        
+        
+      - name: 'Compressor Status'
+        slave: 1
+        address: 6
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_compressor_status
+        
+      - name: 'Hot Gus Status' # 0x8017 | Hot Gas 1 Status | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 7
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_hot_gus_status
+        
+      - name: 'Liquid Valve Status' # 0x8019 | Liquid Valuve Status | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_liquid_valve_status
+        
+      - name: 'EVI Bypass' # 0x8021 | EVI Bypass | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 9
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_evi_bypass
+        
+      - name: '4-way Valve Status' #  0x801A | 4-way Valve Status | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 10
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_4_way_valve_status
+        
+      - name: 'Base Heater Status' # 0x80AF | Base Heater | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 11
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_base_heater_status
+        
+      - name: 'PHE Heater Status' #  0x80D7 | PHE Heater | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 12
+        scan_interval: 30
+        unique_id: hp_phe_heater_status
+        
+        
+      - name: 'Outside Temp 1' # 0x8204
+        unit_of_measurement: °C
+        slave: 1
+        address: 13
+        scale: 0.1
+        precision: 1
+        scan_interval: 30
+        unique_id: hp_outside_temp_1
+        
+
+      - name: 'High Pressure' # 0x8206
+        slave: 1
+        address: 14
+        unit_of_measurement: 'X'
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_high_pressure
+        
+      - name: 'Low Pressure' # 0x8208
+        slave: 1
+        address: 15
+        unit_of_measurement: 'X'
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_low_pressure
+        
+      - name: 'Discharge Temp' # 0x820A
+        slave: 1
+        address: 16
+        unit_of_measurement: °C
+        scale: 0.1
+        precision: 1
+        scan_interval: 30
+        unique_id: hp_discharge_temp
+
+      - name: ' Compressor Current' # seems wrong. the scaling is off 0x8217
+        slave: 1
+        address: 17
+        unit_of_measurement: A
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_compressor_current
+        
+      - name: 'Heat Eexchanger_outlet_temperature_condout' # 0x8218
+        slave: 1
+        address: 18
+        unit_of_measurement: °C
+        scale: 0.1
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_eat_exchanger_outlet_temperature_condout
+        
+      - name: 'Suction Temp' # 0x821A 
+        slave: 1
+        address: 19
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_suction_temp
+        
+    #   - name: 'EHS_EVI_In_Temperature' # 0x821E
+    #     slave: 1
+    #     address: 20
+    #     unit_of_measurement: °C
+    #     scale: 0.1
+    #     #data_type: int8
+    #     scan_interval: 30
+    #     precision: 1
+    #     unique_id: EHS_EVI_In_Temperature
+        
+    #   - name: 'EHS_EVI_Out_Temperature' # 0x8220
+    #     slave: 1
+    #     address: 21
+    #     unit_of_measurement: °C
+    #     scale: 0.1
+    #     #data_type: int8
+    #     scan_interval: 30
+    #     precision: 1
+    #     unique_id: EHS_EVI_Out_Temperature
+        
+      - name: 'hp_modulation_fan_speed' 
+        slave: 1
+        address: 22
+        scan_interval: 20
+        unit_of_measurement: 'rpm'
+        #scale: 1
+        #precision: 1
+        unique_id: hp_modulation_fan_speed
+        
+      - name: 'Main Electronic Expansion Valve' # 0x8229
+        slave: 1
+        address: 23
+        scan_interval: 30
+        unique_id: hp_main_eev1
+        
+      - name: 'Error Code Outdoor' # 0x8235
+        slave: 1
+        address: 24
+        scan_interval: 30
+        unique_id: hp_outdoor_error_code
+        
+      - name: 'Compressor Frequency - Order' # 0x8236
+        slave: 1
+        address: 25
+        scan_interval: 1
+        unit_of_measurement: Hz
+        precision: 1
+        unique_id: hp_compressor_frequency_order
+        
+      - name: 'Compressor Frequency - Target' # 0x8237
+        slave: 1
+        address: 26
+        scan_interval: 1
+        unit_of_measurement: Hz
+        precision: 1
+        unique_id: hp_compressor_frequency_target
+        
+      - name: 'Compressor Frequency - Current' # 0x8238
+        slave: 1
+        address: 27
+        scan_interval: 1
+        unit_of_measurement: Hz
+        precision: 1
+        unique_id: hp_compressor_frequency_current
+        
+      - name: 'DC Link Voltage' # 0x823B
+        slave: 1
+        address: 28
+        unit_of_measurement: V
+        scan_interval: 30
+        unique_id: hp_dc_link_voltage
+        
+    #   - name: 'EHS_Outdoor_Fan_speed' # 0x823D
+    #     slave: 1
+    #     address: 29
+    #     scan_interval: 20
+    #     unit_of_measurement: 'rpm'
+    #     #scale: 1
+    #     #precision: 1
+    #     unique_id: EHS_Outdoor_Fan_speed
+        
+      - name: 'EVA In Temp' # 0x82DE
+        slave: 1
+        address: 30
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_eva_in_temp
+        
+      - name: 'IMP (IGBT) Module Temperature' # 0x8254
+        slave: 1
+        address: 31
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_imp_module_temp
+        
+      - name: 'Compressor OCT Temp' # 0x8278
+        slave: 1
+        address: 32
+        unit_of_measurement: °C
+        scan_interval: 30
+        scale: 0.1
+        unique_id: hp_compressor_oct_temp
+        
+      - name: 'Compressor Top Temperature' # 0x8280
+        slave: 1
+        address: 33
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_compressor_top_temp
+        
+      - name: 'High Pressure Saturation Temperature' # 0x829F
+        slave: 1
+        address: 34
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_high_pressure_saturation_tamp
+        
+      - name: 'Low Pressure Saturation Temperature' # 0x82A0
+        slave: 1
+        address: 35
+        unit_of_measurement: °C
+        scale: 0.1
+        #data_type: int8
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_low_pressure_saturation_tamp
+
+#Indoor-------------------------------------------------------------------------
+
+      - name: '60'
+        slave: 1
+        address: 60
+        scan_interval: 30
+        unique_id: hp_60
+        
+      - name: '61'
+        slave: 1
+        address: 61
+        scan_interval: 30
+        unique_id: hp_61
+        
+      - name: '62'
+        slave: 1
+        address: 62
+        scan_interval: 30
+        unique_id: hp_62
+        
+        
+      - name: 'Room Temp set'
+        slave: 1
+        address: 58
+        unit_of_measurement: °C
+        scale: 0.1
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_room_temp_set
+        
+        
+      - name: 'Room Temp' # works only when you set the zone to be control using room temp instead of water temp. That also forces the mode to go on heating
+        slave: 1
+        address: 59
+        unit_of_measurement: °C
+        scale: 0.1
+        scan_interval: 30
+        precision: 1
+        unique_id: hp_room_temp
+        
+        
+      - name: '60'
+        slave: 1
+        address: 60
+        scan_interval: 30
+        unique_id: hp_60
+        
+      - name: '61'
+        slave: 1
+        address: 61
+        scan_interval: 30
+        unique_id: hp_61
+        
+      - name: '62'
+        slave: 1
+        address: 62
+        scan_interval: 30
+        unique_id: hp_62
+        
+      - name: 'EHS_Error_Code'
+        slave: 1
+        address: 63
+        unique_id: EHS_Error_Code
+        
+      - name: 'EHS_Restrictions'
+        slave: 1
+        address: 64
+        unique_id: EHS_Restrictions
+    
+      - name: 'Water IN Temp'
+        unit_of_measurement: °C
+        slave: 1
+        address: 65
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_water_in_temp
+        
+      - name: 'Water OUT Temp'
+        unit_of_measurement: °C
+        slave: 1
+        address: 66
+        scale: 0.1
+        scan_interval: 1
+        precision: 1
+        unique_id: hp_water_out_temp
+    
+      - name: 'Water OUT Set Temp'
+        unit_of_measurement: °C
+        slave: 1
+        address: 68
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_water_out_set_temp
+        
+      - name: 'EHS_Hot_Water_Mode'
+        slave: 1
+        address: 73
+        scan_interval: 20
+        unique_id: EHS_Hot_Water_Mode
+        
+      - name: '74' # Target DHW Temp
+        unit_of_measurement: °C
+        slave: 1
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        address: 74
+        unique_id: hp_74
+        
+      - name: '75' # current DHW temp
+        unit_of_measurement: °C
+        slave: 1
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        address: 75
+        unique_id: hp_75
+        
+      - name: '76'
+        slave: 1
+        address: 76
+        unique_id: hp_76
+        
+      - name: '77'
+        slave: 1
+        address: 77
+        unique_id: hp_77
+        
+      - name: '78'
+        slave: 1
+        address: 78
+        unique_id: hp_78
+        
+      - name: '79'
+        slave: 1
+        address: 79
+        unique_id: hp_79
+        
+      - name: '80'
+        slave: 1
+        address: 80
+        unique_id: hp_80
+    
+        
+#      - name: 'EHS_Hot_Water_Temp_BSP'
+#        unit_of_measurement: °C
+#        slave: 1
+#        address: 75
+#        scale: 0.1
+#        scan_interval: 20
+#        precision: 1
+#        unique_id: EHS_Hot_Water_Temp_BSP
+        
+# Experimental------------------------------------------------------------------
+
+      - name: '?Temp Reference 0=room , 1=water out' # 0x406F | Temperature Reference | - | - | 0=room; 1=water out | |
+        slave: 1
+        address: 81 #0x40C4
+        unique_id: hp_81
+        
+      - name: '3-way valve position (0=room; 1=tank)' # 0x4067 | 3-Way Valve | - | - | 0=room; 1=tank | - | |
+        slave: 1
+        address: 82
+        unique_id: hp_3_way_valve_position 
+
+      - name: 'EHS_Backup_Heater' # 0x406C | Backup Heater | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 83 #0x406C
+        unique_id: EHS_Backup_Heater
+        
+      - name: 'EHS_Booster_Heater' #  | 0x4087 | Booster Heater | - | - | 0=off; 1=on | - | |
+        slave: 1
+        address: 84 #0x4087
+        unique_id: EHS_Booster_Heater
+        
+      - name: 'EHS_Pump_PWM' #  0x40C4 | Water Pump PWM | no | x1 | 0-100 | % | |
+        unit_of_measurement: '%'
+        slave: 1
+        address: 85 #0x40C4
+        unique_id: EHS_Pump_PWM
+        
+      - name: '??? Temp Reference 0=room , 1=water out' # 0x406F | Temperature Reference | - | - | 0=room; 1=water out | |
+        slave: 1
+        address: 86 #0x40C4
+        unique_id: hp_temp_ref
+         
+        
+    #   - name: 'EHS_Controller_sensor_temp'
+    #     unit_of_measurement: °C
+    #     slave: 1
+    #     address: 87 #0x4203
+    #     scale: 0.1
+    #     scan_interval: 20
+    #     precision: 1
+    #     unique_id: EHS_Controller_sensor_temp
+
+        
+      - name: 'Water Flow L/min' # 0x42E9 | Flow Sensor | no | x10 | 0-80 | L/min | |
+        unit_of_measurement: 'l/min'
+        slave: 1
+        address: 87
+        scale: 0.1
+        scan_interval: 30
+        precision: 2
+        unique_id: hp_water_flow
+        
+      - name: 'EHS_FR_Controll'
+        slave: 1
+        address: 88 #0x42F1
+        scan_interval: 20
+        unique_id: EHS_FR_Controll
+        
+#      - name: 'EHS_Backup_heater_temp'
+#        unit_of_measurement: °C
+#        slave: 1
+#        address: 88 #0x4239
+#        scale: 0.1
+#        scan_interval: 20
+#        precision: 1
+#        unique_id: EHS_Backup_heater_temp
+        
+      - name: 'Water Out Target' 
+        slave: 1
+        address: 89 #0x4247
+        #scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_water_out_target
+
+      - name: 'Water Law Target'
+        unit_of_measurement: °C
+        slave: 1
+        address: 90 #0x4248
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_water_law_target
+        
+      - name: 'Water Law Target Temp'
+        unit_of_measurement: °C
+        slave: 1
+        address: 91 #0x427F
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_water_law_target_temp
+        
+      - name: 'EHS_Mixing_valve_temp'
+        unit_of_measurement: °C
+        slave: 1
+        address: 92 #0x428C
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: EHS_Mixing_valve_temp
+        
+      - name: 'EHS_Modulation_Fan'
+        unit_of_measurement: '%'
+        slave: 1
+        address: 93 #0x42CC
+        unique_id: EHS_Modulation_Fan
+        
+      - name: 'EHS_Water_Zone_1_temp' 
+        unit_of_measurement: °C
+        slave: 1
+        address: 94 #0x42D6
+        scale: 0.1
+        scan_interval: 20
+        precision: 2
+        unique_id: EHS_Water_Zone_1_temp
+        
+      - name: 'EHS_Water_Zone_2_temp' 
+        unit_of_measurement: °C
+        slave: 1
+        address: 95 #0x42D7
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: EHS_Water_Zone_2_temp
+        
+      - name: 'EHS_Water_Zone_1_temp_F' 
+        unit_of_measurement: °C
+        slave: 1
+        address: 96 #0x42D8
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: EHS_Water_Zone_1_temp_F
+        
+      - name: 'EHS_Water_Zone_2_temp_F' 
+        unit_of_measurement: °C
+        slave: 1
+        address: 97 #0x42D9
+        scale: 0.1
+        scan_interval: 20
+        precision: 1
+        unique_id: EHS_Water_Zone_2_temp_F
+        
+      - name: '98' 
+        slave: 1
+        address: 98 
+        scan_interval: 20
+        precision: 1
+        unique_id: hp_98
+
+        
+      - name: 'EHS_ENUM_IN_CHILLER_SETTING_DEMAND_LEVEL'
+        slave: 1
+        address: 100 #0x40FC
+        scan_interval: 20
+        unique_id: EHS_ENUM_IN_CHILLER_SETTING_DEMAND_LEVEL
+        
+      - name: 'EHS_VAR_IN_MODULATING_VALVE_1'
+        slave: 1
+        address: 101
+        scan_interval: 20
+        unique_id: EHS_VAR_IN_MODULATING_VALVE_1
+        
+        
+        
+    climates:
+      - name: 'Heating Controller'
+        slave: 1
+        address: 96
+        scale: 0.1
+        max_temp: 70
+        min_temp: 20
+        scan_interval: 20
+        precision: 2
+        target_temp_register: 68
+        hvac_onoff_register: 52
+        hvac_mode_register:
+            address: 53
+            values:
+                state_auto: 0
+                state_cool: 1
+#                state_dry: 2
+#                state_fan_only: 3
+                state_heat: 4
+        unique_id: heating_climate
+        
+        
+      - name: 'Weather Comp Controller'
+        slave: 1
+        address: 90
+        scale: 0.1
+        max_temp: 5
+        min_temp: -5
+        scan_interval: 10
+        precision: 1
+        temp_step: 0.1
+        temperature_unit: C
+        target_temp_register: 90
+        offset: 0
+        hvac_onoff_register: 52
+        hvac_mode_register:
+            address: 53
+            values:
+                state_auto: 0
+                state_cool: 1
+#                state_dry: 2
+#                state_fan_only: 3
+                state_heat: 4
+        unique_id: hp_weather_comp
+        
+      - name: 'Hot Water Controller'
+        slave: 1
+        address: 75
+        #Ist Temp
+        scale: 0.1
+        max_temp: 55
+        min_temp: 35
+        scan_interval: 20
+        precision: 1
+        target_temp_register: 74
+        #Soll Temp
+        hvac_onoff_register: 72
+        unique_id: dhw_climate
+        
+
+    #   - name: "Hot Water"
+    #     status_addr: 0x4237 # mandatory address regarding status temperature
+    #     set_addr: 0x4235    # mandatory address regarding setpoint temperature
+    #     set_min: 40         # optional, default = 25°C
+    #     set_max: 65         # optional, default = 65°C
+    #     enable_addr: 0x4065 # mandatory enabling address, only 1/0 should be written there. Look at mode sub section
+    #                       # By default the value is set = 1 when HA send a value > 0.
+    #     preset:         
+    #       addr: 0x4066      # Address for presets
+    #       ClimatePreset0Value: 1 # CLIMATE_PRESET_NONE => 1 Standard
+    #       ClimatePreset1Value: -1 # CLIMATE_PRESET_HOME 
+    #       ClimatePreset2Value: -1 # CLIMATE_PRESET_AWAY 
+    #       ClimatePreset3Value: 2 # CLIMATE_PRESET_BOOST => 2 Power
+    #       ClimatePreset4Value: -1 # CLIMATE_PRESET_COMFORT 
+    #       ClimatePreset5Value: 0 # CLIMATE_PRESET_ECO => 0 Eco
+    #       ClimatePreset6Value: -1 # CLIMATE_PRESET_SLEEP 
+    #       ClimatePreset7Value: 3 # CLIMATE_PRESET_ACTIVITY  => 3 Force
+    #     visual:
+    #       temperature_step:
+    #       target_temperature: 1
+    #       current_temperature: 0.1       
+    
+      - name: 'freq order'
+        slave: 1
+        address: 25
+        #Ist Temp
+        scale: 1
+        max_temp: 35
+        min_temp: 0
+        scan_interval: 1
+        precision: 1
+        temp_step: 2
+        target_temp_register: 25
+        #Soll Temp
+        unique_id: freq_climate
+        
+        
+      - name: 'freq2 target'
+        slave: 1
+        address: 26
+        #Ist Temp
+        scale: 1
+        max_temp: 35
+        min_temp: 0
+        scan_interval: 1
+        temp_step: 2
+        precision: 1
+        target_temp_register: 26
+        #Soll Temp
+        unique_id: freq_climate2
+        
+
+  
