@@ -196,7 +196,7 @@
       - name: ' Compressor Current' # seems wrong. the scaling is off 0x8217
         slave: 1
         address: 17
-        unit_of_measurement: A
+        unit_of_measurement: Hz
         scan_interval: 30
         precision: 1
         unique_id: hp_compressor_current

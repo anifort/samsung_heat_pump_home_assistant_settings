@@ -140,6 +140,16 @@ template:
           {% endif %}
           
   - sensor:
+    
+      - name: Estimated Consumption (W)
+        unique_id: hp_estimated_consumption
+        state_class: measurement
+        unit_of_measurement: "W"
+        icon: mdi:lightning-bold
+        state: >
+          {% set energy = 50 * states('sensor.compressor_current') | float(0) %}
+          {{ (energy) | round(2) }}
+          
       - name: Water Delta T
         unique_id: hp_delta_t
         state_class: measurement
@@ -189,4 +199,26 @@ template:
             {{ target_temp | round(1) }}
           {% endif %}
           
-     
+      - name: "Heat Output"
+        unique_id: hp_heat_output
+        unit_of_measurement: "kW"
+        state_class: measurement
+        state: >
+          {% set in = states('sensor.hp_water_in_temperature') | float(0) %}
+          {% set out = states('sensor.hp_water_out_temperature') | float(0) %}
+          {% set delta = out - in %}
+          {% set flow = states('sensor.water_flow_l_min') | float(0) %}
+          {{ ( flow * delta * 4.2 ) / 60 | round(2) }}
+          
+      - name: "C Of P"
+        unique_id: hp_cop_calc
+        state_class: measurement
+        state: >
+          {% set in = states('sensor.hp_water_in_temperature') | float(0) %}
+          {% set out = states('sensor.hp_water_out_temperature') | float(0) %}
+          {% set delta = out - in %}
+          {% set flow = states('sensor.water_flow_l_min') | float(0) %}
+          {% set heat_out = (( flow * delta * 4.2 ) / 60) * 1000  %}
+          {% set energy = 50 * states('sensor.compressor_current') | float(0) %}
+          {{ ( heat_out / energy ) | float(0) | round(2) }}
+          
